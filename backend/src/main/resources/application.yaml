@@ -1,3 +1,7 @@
 spring:
   application:
     name: url-shortener
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: url_shortener
