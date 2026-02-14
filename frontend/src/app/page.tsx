@@ -136,31 +136,31 @@ export default function Home() {
   return (
     <div className="w-full max-w-md fade-in">
       {/* ── Glass Card ── */}
-      <div className="glass rounded-3xl px-8 pt-10 pb-8">
+      <div className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg">
         {/* Heading */}
         <h1
-          className="text-center text-2xl font-bold text-slate-800 mb-7 tracking-tight"
+          className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display"
           style={{ fontFamily: "var(--font-outfit)" }}
         >
           {heading}
         </h1>
 
         {/* ── Pill Toggle ── */}
-        <div className="glass-inner rounded-full p-1 flex mb-7">
+        <div className="glass-inner rounded-full p-1 flex mb-8">
           <button
             onClick={() => switchMode("shorten")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
-              ? "bg-white/70 text-slate-800 shadow-sm"
-              : "text-slate-400 hover:text-slate-500"
+            className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
+              ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
+              : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
           >
             Shorten URL
           </button>
           <button
             onClick={() => switchMode("fetch")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "fetch"
-              ? "bg-white/70 text-slate-800 shadow-sm"
-              : "text-slate-400 hover:text-slate-500"
+            className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "fetch"
+              ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
+              : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
           >
             Fetch Link
@@ -169,22 +169,22 @@ export default function Home() {
 
         {/* ══════════════ Shorten Mode ══════════════ */}
         {mode === "shorten" && (
-          <div className="fade-in space-y-4">
+          <div className="fade-in space-y-6">
             {/* Input row with inline button */}
-            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-4">
+            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
               <input
                 type="url"
                 value={longUrl}
                 onChange={(e) => setLongUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleShorten()}
                 placeholder="https://example.com/very-long-url..."
-                className="flex-1 bg-transparent py-3 text-sm text-slate-700 placeholder-slate-400/60 outline-none"
+                className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
                 style={{ fontFamily: "var(--font-jetbrains)" }}
               />
               <button
                 onClick={handleShorten}
                 disabled={shortenLoading || !longUrl.trim()}
-                className="shrink-0 px-5 py-2 bg-white/70 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-sm font-semibold rounded-full border border-white/60 shadow-sm transition-all duration-200 btn-press cursor-pointer"
+                className="shrink-0 px-6 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
               >
                 {shortenLoading ? <Spinner /> : "Shorten"}
               </button>
@@ -192,32 +192,31 @@ export default function Home() {
 
             {/* Success result */}
             {shortCode && (
-              <div className="fade-in glass-inner rounded-2xl p-5 relative group" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <button
-                  onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
-                  className="absolute top-3 right-3 p-2 bg-white/70 hover:bg-white text-slate-500 hover:text-amber-600 rounded-lg border border-white/50 shadow-sm transition-all duration-200 btn-press cursor-pointer group-hover:scale-110"
-                  title="Copy Link"
-                >
-                  {copied ? <CheckIcon /> : <CopyIcon />}
-                </button>
-
-                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-1">
+              <div className="fade-in glass-inner rounded-xl p-6 border border-emerald-500/30" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1 shadow-black/50 drop-shadow-sm">
                   Short Code
                 </p>
-                <div className="text-xl font-bold text-slate-800 mb-4">{shortCode}</div>
+                <div className="text-2xl font-bold text-white mb-5 drop-shadow-md tracking-tight">{shortCode}</div>
 
-                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-2">
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 shadow-black/50 drop-shadow-sm">
                   Full Link
                 </p>
-                <div className="pr-10">
+                <div className="flex items-center gap-2">
                   <a
                     href={`${API}/url/${shortCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-3 py-2 bg-white/40 hover:bg-white/70 rounded-lg text-slate-700 text-xs border border-white/30 truncate transition-colors"
+                    className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-emerald-300 text-sm border border-white/5 truncate transition-colors"
                   >
                     {`${API}/url/${shortCode}`}
                   </a>
+                  <button
+                    onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
+                    className="p-3 bg-white/10 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
+                    title="Copy Link"
+                  >
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                  </button>
                 </div>
               </div>
             )}
@@ -229,22 +228,22 @@ export default function Home() {
 
         {/* ══════════════ Fetch Mode ══════════════ */}
         {mode === "fetch" && (
-          <div className="fade-in space-y-4">
+          <div className="fade-in space-y-6">
             {/* Input row with inline GO button */}
-            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-4">
+            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
               <input
                 type="text"
                 value={fetchCode}
                 onChange={(e) => setFetchCode(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGo()}
                 placeholder="Enter short code..."
-                className="flex-1 bg-transparent py-3 text-sm text-slate-700 placeholder-slate-400/60 outline-none"
+                className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
                 style={{ fontFamily: "var(--font-jetbrains)" }}
               />
               <button
                 onClick={handleGo}
                 disabled={fetchLoading || !fetchCode.trim()}
-                className="shrink-0 px-5 py-2 bg-white/70 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-sm font-semibold rounded-full border border-white/60 shadow-sm transition-all duration-200 btn-press cursor-pointer"
+                className="shrink-0 px-8 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
               >
                 {fetchLoading ? <Spinner /> : "GO"}
               </button>
@@ -254,7 +253,7 @@ export default function Home() {
             <button
               onClick={handleStats}
               disabled={statsLoading || !fetchCode.trim()}
-              className="w-full py-2.5 bg-white/30 hover:bg-white/50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 text-sm font-semibold rounded-full border border-white/40 transition-all duration-200 btn-press cursor-pointer"
+              className="w-full py-3.5 bg-cyan-500/90 hover:bg-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
             >
               {statsLoading ? (
                 <span className="inline-flex items-center gap-2 justify-center">
@@ -267,33 +266,32 @@ export default function Home() {
 
             {/* Resolved URL */}
             {resolvedUrl && (
-              <div className="fade-in glass-inner rounded-2xl p-5 relative group" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <button
-                  onClick={() => copyToClipboard(resolvedUrl)}
-                  className="absolute top-3 right-3 p-2 bg-white/70 hover:bg-white text-slate-500 hover:text-emerald-600 rounded-lg border border-white/50 shadow-sm transition-all duration-200 btn-press cursor-pointer group-hover:scale-110"
-                  title="Copy URL"
-                >
-                  {copied ? <CheckIcon /> : <CopyIcon />}
-                </button>
-
-                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-3">
+              <div className="fade-in glass-inner rounded-xl p-6 border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                   Destination URL
                 </p>
-                <div className="pr-10 mb-4">
+                <div className="flex items-center gap-2 mb-5">
                   <a
                     href={resolvedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-sm text-slate-700 break-all leading-relaxed hover:text-emerald-700 transition-colors"
+                    className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-white text-sm border border-white/5 truncate transition-colors drop-shadow-sm"
                   >
                     {resolvedUrl}
                   </a>
+                  <button
+                    onClick={() => copyToClipboard(resolvedUrl)}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
+                    title="Copy URL"
+                  >
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                  </button>
                 </div>
                 <a
                   href={resolvedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full text-center py-2.5 bg-white/60 hover:bg-white text-slate-700 text-xs font-semibold rounded-lg border border-white/50 shadow-sm transition btn-press cursor-pointer"
+                  className="block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-emerald-900/20 transition btn-press cursor-pointer"
                 >
                   Visit URL ↗
                 </a>
@@ -302,12 +300,12 @@ export default function Home() {
 
             {/* Stats result */}
             {clickCount !== null && (
-              <div className="fade-in glass-inner rounded-2xl p-5 text-center" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                  Click Count
+              <div className="fade-in glass-inner rounded-xl p-6 text-center border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  Total Clicks
                 </p>
                 <p
-                  className="text-4xl font-bold text-slate-800"
+                  className="text-5xl font-bold text-white drop-shadow-lg"
                 >
                   {clickCount}
                 </p>
@@ -322,7 +320,7 @@ export default function Home() {
       </div>
 
       {/* ── Footer ── */}
-      <p className="text-center text-xs text-slate-400 mt-5 tracking-wide">
+      <p className="text-center text-xs text-white/40 mt-8 tracking-widest font-medium uppercase relative z-10">
         Built by Sumanth
       </p>
     </div>
