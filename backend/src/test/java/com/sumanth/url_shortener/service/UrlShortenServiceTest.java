@@ -37,13 +37,13 @@ public class UrlShortenServiceTest {
     private ValueOperations<String, String> valueOperations;
 
     @Mock
-    private MongoTemplate mongoTemplate;
+    private RedisStreamPublisher publisher;
 
     private UrlShortenService urlShortenService;
 
     @BeforeEach
     void setUp() {
-        urlShortenService = new UrlShortenService(repo, counterService, redisTemplate, mongoTemplate);
+        urlShortenService = new UrlShortenService(repo, counterService, redisTemplate, publisher);
     }
 
     @Test
@@ -107,5 +107,21 @@ public class UrlShortenServiceTest {
 
         UrlMapping result = urlShortenService.shortenUrl(urlWithDefaultPort);
         assertNotNull(result);
+    }
+
+    @Test
+    void expandUrl_shouldPublishClickEvent() {
+        String shortCode = "abc";
+        String longUrl = "https://www.google.com";
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(shortCode)).thenReturn(longUrl);
+
+        UrlMapping result = urlShortenService.expandUrl(shortCode, true);
+
+        assertNotNull(result);
+        assertEquals(longUrl, result.getLongUrl());
+        // Verify that publishClickEvent was called
+        org.mockito.Mockito.verify(publisher).publishClickEvent(shortCode);
     }
 }
