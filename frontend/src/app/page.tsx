@@ -50,7 +50,7 @@ export default function Home() {
         return;
       }
 
-      setShortCode(data.shortCode);
+      setShortCode(data.shortUrl);
     } catch {
       setShortenError("Network error. Is the backend running?");
     } finally {
@@ -68,15 +68,20 @@ export default function Home() {
 
     try {
       const res = await fetch(`${API}/url/${fetchCode}`, {
-        redirect: "manual",
+        headers: { "Accept": "application/json" }
       });
 
-      const location = res.headers.get("Location");
-
-      if (location) {
-        setResolvedUrl(location);
-      } else {
+      if (!res.ok) {
         setFetchError("Could not resolve — short code may be invalid.");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data && data.longUrl) {
+        setResolvedUrl(data.longUrl);
+      } else {
+        setFetchError("Invalid response from server.");
       }
     } catch {
       setFetchError("Network error. Is the backend running?");
@@ -145,8 +150,8 @@ export default function Home() {
           <button
             onClick={() => switchMode("shorten")}
             className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
-                ? "bg-white/70 text-slate-800 shadow-sm"
-                : "text-slate-400 hover:text-slate-500"
+              ? "bg-white/70 text-slate-800 shadow-sm"
+              : "text-slate-400 hover:text-slate-500"
               }`}
           >
             Shorten URL
@@ -154,8 +159,8 @@ export default function Home() {
           <button
             onClick={() => switchMode("fetch")}
             className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "fetch"
-                ? "bg-white/70 text-slate-800 shadow-sm"
-                : "text-slate-400 hover:text-slate-500"
+              ? "bg-white/70 text-slate-800 shadow-sm"
+              : "text-slate-400 hover:text-slate-500"
               }`}
           >
             Fetch Link
@@ -174,6 +179,7 @@ export default function Home() {
                 onKeyDown={(e) => e.key === "Enter" && handleShorten()}
                 placeholder="https://example.com/very-long-url..."
                 className="flex-1 bg-transparent py-3 text-sm text-slate-700 placeholder-slate-400/60 outline-none"
+                style={{ fontFamily: "var(--font-jetbrains)" }}
               />
               <button
                 onClick={handleShorten}
@@ -186,23 +192,32 @@ export default function Home() {
 
             {/* Success result */}
             {shortCode && (
-              <div className="fade-in glass-inner rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-emerald-700/80 uppercase tracking-wider">
-                  Your short link
+              <div className="fade-in glass-inner rounded-2xl p-5 relative group" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <button
+                  onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
+                  className="absolute top-3 right-3 p-2 bg-white/70 hover:bg-white text-slate-500 hover:text-amber-600 rounded-lg border border-white/50 shadow-sm transition-all duration-200 btn-press cursor-pointer group-hover:scale-110"
+                  title="Copy Link"
+                >
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                </button>
+
+                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-1">
+                  Short Code
                 </p>
-                <div className="flex items-center gap-2">
-                  <code
-                    className="flex-1 px-3 py-2 bg-white/50 rounded-lg text-slate-700 text-sm border border-white/40 truncate"
-                    style={{ fontFamily: "var(--font-jetbrains)" }}
+                <div className="text-xl font-bold text-slate-800 mb-4">{shortCode}</div>
+
+                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-2">
+                  Full Link
+                </p>
+                <div className="pr-10">
+                  <a
+                    href={`${API}/url/${shortCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-3 py-2 bg-white/40 hover:bg-white/70 rounded-lg text-slate-700 text-xs border border-white/30 truncate transition-colors"
                   >
                     {`${API}/url/${shortCode}`}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
-                    className="shrink-0 px-3 py-2 bg-white/70 hover:bg-white text-slate-600 text-xs font-semibold rounded-lg border border-white/50 shadow-sm transition btn-press cursor-pointer"
-                  >
-                    {copied ? "✓ Copied" : "Copy"}
-                  </button>
+                  </a>
                 </div>
               </div>
             )}
@@ -252,41 +267,47 @@ export default function Home() {
 
             {/* Resolved URL */}
             {resolvedUrl && (
-              <div className="fade-in glass-inner rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-emerald-700/80 uppercase tracking-wider">
-                  Original URL
+              <div className="fade-in glass-inner rounded-2xl p-5 relative group" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <button
+                  onClick={() => copyToClipboard(resolvedUrl)}
+                  className="absolute top-3 right-3 p-2 bg-white/70 hover:bg-white text-slate-500 hover:text-emerald-600 rounded-lg border border-white/50 shadow-sm transition-all duration-200 btn-press cursor-pointer group-hover:scale-110"
+                  title="Copy URL"
+                >
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                </button>
+
+                <p className="text-[10px] font-bold text-emerald-700/80 uppercase tracking-widest mb-3">
+                  Destination URL
                 </p>
-                <p className="text-sm text-slate-700 break-all leading-relaxed">
-                  {resolvedUrl}
-                </p>
-                <div className="flex gap-2">
+                <div className="pr-10 mb-4">
                   <a
                     href={resolvedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 text-center py-2 bg-white/60 hover:bg-white text-slate-700 text-xs font-semibold rounded-lg border border-white/50 shadow-sm transition btn-press"
+                    className="block text-sm text-slate-700 break-all leading-relaxed hover:text-emerald-700 transition-colors"
                   >
-                    Open in new tab ↗
+                    {resolvedUrl}
                   </a>
-                  <button
-                    onClick={() => copyToClipboard(resolvedUrl)}
-                    className="flex-1 py-2 bg-white/60 hover:bg-white text-slate-700 text-xs font-semibold rounded-lg border border-white/50 shadow-sm transition btn-press cursor-pointer"
-                  >
-                    {copied ? "✓ Copied" : "Copy URL"}
-                  </button>
                 </div>
+                <a
+                  href={resolvedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center py-2.5 bg-white/60 hover:bg-white text-slate-700 text-xs font-semibold rounded-lg border border-white/50 shadow-sm transition btn-press cursor-pointer"
+                >
+                  Visit URL ↗
+                </a>
               </div>
             )}
 
             {/* Stats result */}
             {clickCount !== null && (
-              <div className="fade-in glass-inner rounded-2xl p-4 text-center">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              <div className="fade-in glass-inner rounded-2xl p-5 text-center" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   Click Count
                 </p>
                 <p
-                  className="text-3xl font-bold text-slate-800"
-                  style={{ fontFamily: "var(--font-jetbrains)" }}
+                  className="text-4xl font-bold text-slate-800"
                 >
                   {clickCount}
                 </p>
@@ -319,9 +340,26 @@ function Spinner() {
   );
 }
 
+function CopyIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 function ErrorPanel({ message }: { message: string }) {
   return (
-    <div className="fade-in bg-rose-100/40 border border-rose-200/50 rounded-2xl px-4 py-3">
+    <div className="fade-in bg-rose-100/40 border border-rose-200/50 rounded-2xl px-4 py-3" style={{ fontFamily: "var(--font-jetbrains)" }}>
       <p className="text-sm text-rose-600 font-medium">{message}</p>
     </div>
   );
