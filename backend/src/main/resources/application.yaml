@@ -5,3 +5,5 @@ spring:
     mongodb:
       uri: ${MONGODB_URI}
       database: url_shortener
+    redis:
+      url: ${REDIS_URL}

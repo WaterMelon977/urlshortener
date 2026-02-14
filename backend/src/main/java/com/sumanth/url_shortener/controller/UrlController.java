@@ -1,5 +1,8 @@
 package com.sumanth.url_shortener.controller;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,11 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sumanth.url_shortener.controller.dto.ShortUrlDto;
+import com.sumanth.url_shortener.controller.dto.UrlRequestDto;
 import com.sumanth.url_shortener.model.UrlMapping;
 import com.sumanth.url_shortener.service.UrlShortenService;
 
 @RestController
-@RequestMapping("/url")
+@RequestMapping
 public class UrlController {
 
     private UrlShortenService urlShortenService;
@@ -22,16 +26,27 @@ public class UrlController {
 
     }
 
-    @PostMapping
-    public ShortUrlDto shortenUrl(@RequestBody String longUrl) {
-        UrlMapping urlMapping = urlShortenService.shortenUrl(longUrl);
-        return new ShortUrlDto(urlMapping.getShortCode());
+    @PostMapping("/shorten")
+    public ResponseEntity<?> shortenUrl(@RequestBody UrlRequestDto request) {
+        UrlMapping urlMapping = urlShortenService.shortenUrl(request.getLongUrl());
+        return ResponseEntity.ok(new ShortUrlDto(urlMapping.getShortCode()));
     }
 
-    @GetMapping("/{shortCode}")
-    public String expandUrl(@PathVariable String shortCode) {
-        UrlMapping urlMapping = urlShortenService.expandUrl(shortCode);
-        return urlMapping.getLongUrl();
+    @GetMapping("/url/{shortCode}")
+    public ResponseEntity<Void> expandUrl(@PathVariable String shortCode) {
+        UrlMapping urlMapping = urlShortenService.expandUrl(shortCode, true);
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                .header(HttpHeaders.LOCATION, urlMapping.getLongUrl())
+                .build();
+    }
+
+    @GetMapping("/url/{shortCode}/stats")
+    public ResponseEntity<Long> getClickCount(@PathVariable String shortCode) {
+        UrlMapping urlMapping = urlShortenService.expandUrl(shortCode, false);
+        if (urlMapping == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(urlMapping.getClickCount());
     }
 
 }
