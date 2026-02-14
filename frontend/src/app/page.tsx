@@ -1,30 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react"; // Added useRef, useEffect
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 type Mode = "shorten" | "fetch";
+
+// ── Vanilla Tilt Wrapper ──
+import VanillaTilt from 'vanilla-tilt';
+
+function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  const tiltRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const tiltNode = tiltRef.current;
+    if (tiltNode) {
+      VanillaTilt.init(tiltNode, {
+        max: 8, // subtle tilt
+        speed: 400,
+        glare: true,
+        "max-glare": 0.3,
+        scale: 1.02,
+        gyroscope: true, // for mobile if supported
+        // @ts-expect-error vanilla-tilt supports element but types might be outdated
+        "mouse-event-element": document.body, // Tilt based on mouse position anywhere on the body
+      });
+    }
+    return () => {
+      // @ts-expect-error VanillaTilt adds destroy method
+      tiltNode?.vanillaTilt?.destroy();
+    };
+  }, []);
+
+  return (
+    <div ref={tiltRef} className={className}>
+      {children}
+    </div>
+  );
+}
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("shorten");
 
   // ── Shorten state ──
   const [longUrl, setLongUrl] = useState("");
-  const [shortCode, setShortCode] = useState<string | null>(null);
+  const [shortCode, setShortCode] = useState<string>(""); // Changed from string | null
   const [shortenLoading, setShortenLoading] = useState(false);
-  const [shortenError, setShortenError] = useState<string | null>(null);
+  const [shortenError, setShortenError] = useState<string>(""); // Changed from string | null
 
   // ── Fetch state ──
   const [fetchCode, setFetchCode] = useState("");
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [resolvedUrl, setResolvedUrl] = useState<string>(""); // Changed from string | null
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string>(""); // Changed from string | null
 
   // ── Stats state ──
   const [clickCount, setClickCount] = useState<number | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [statsError, setStatsError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string>(""); // Changed from string | null
 
   const [copied, setCopied] = useState(false);
 
@@ -33,8 +66,8 @@ export default function Home() {
   async function handleShorten() {
     if (!longUrl.trim()) return;
     setShortenLoading(true);
-    setShortenError(null);
-    setShortCode(null);
+    setShortenError(""); // Changed from null
+    setShortCode(""); // Changed from null
 
     try {
       const res = await fetch(`${API}/shorten`, {
@@ -61,10 +94,10 @@ export default function Home() {
   async function handleGo() {
     if (!fetchCode.trim()) return;
     setFetchLoading(true);
-    setFetchError(null);
-    setResolvedUrl(null);
+    setFetchError(""); // Changed from null
+    setResolvedUrl(""); // Changed from null
     setClickCount(null);
-    setStatsError(null);
+    setStatsError(""); // Changed from null
 
     try {
       const res = await fetch(`${API}/url/${fetchCode}`, {
@@ -72,7 +105,8 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        setFetchError("Could not resolve — short code may be invalid.");
+        if (res.status === 404) setFetchError("Short code not found"); // Updated error message
+        else setFetchError("Error fetching URL"); // Updated error message
         return;
       }
 
@@ -81,10 +115,10 @@ export default function Home() {
       if (data && data.longUrl) {
         setResolvedUrl(data.longUrl);
       } else {
-        setFetchError("Invalid response from server.");
+        setFetchError("Invalid response from server."); // Updated error message
       }
     } catch {
-      setFetchError("Network error. Is the backend running?");
+      setFetchError("Network error."); // Updated error message
     } finally {
       setFetchLoading(false);
     }
@@ -93,19 +127,20 @@ export default function Home() {
   async function handleStats() {
     if (!fetchCode.trim()) return;
     setStatsLoading(true);
-    setStatsError(null);
+    setStatsError(""); // Changed from null
     setClickCount(null);
 
     try {
       const res = await fetch(`${API}/url/${fetchCode}/stats`);
 
       if (!res.ok) {
-        setStatsError("Could not fetch stats.");
+        if (res.status === 404) setStatsError("Short code not found"); // Updated error message
+        else setStatsError("Error fetching stats"); // Updated error message
         return;
       }
 
-      const count = await res.json();
-      setClickCount(count);
+      const data = await res.json(); // Changed from `count` to `data`
+      setClickCount(data.clickCount); // Accessing clickCount from data
     } catch {
       setStatsError("Network error.");
     } finally {
@@ -121,12 +156,12 @@ export default function Home() {
 
   function switchMode(newMode: Mode) {
     setMode(newMode);
-    setShortenError(null);
-    setShortCode(null);
-    setFetchError(null);
-    setResolvedUrl(null);
+    setShortenError(""); // Changed from null
+    setShortCode(""); // Changed from null
+    setFetchError(""); // Changed from null
+    setResolvedUrl(""); // Changed from null
     setClickCount(null);
-    setStatsError(null);
+    setStatsError(""); // Changed from null
   }
 
   // ─── Render ────────────────────────────────────────────
@@ -134,19 +169,19 @@ export default function Home() {
   const heading = mode === "shorten" ? "Shorten URL" : "Fetch Link";
 
   return (
-    <div className="w-full max-w-md fade-in">
-      {/* ── Glass Card ── */}
-      <div className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg">
+    <div className="w-full max-w-md fade-in perspective-1000"> {/* Added perspective-1000 */}
+      {/* ── Glass Card with Tilt ── */}
+      <TiltCard className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg transform-style-3d"> {/* Wrapped with TiltCard and added transform-style-3d */}
         {/* Heading */}
         <h1
-          className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display"
+          className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display translate-z-10" // Added translate-z-10
           style={{ fontFamily: "var(--font-outfit)" }}
         >
           {heading}
         </h1>
 
         {/* ── Pill Toggle ── */}
-        <div className="glass-inner rounded-full p-1 flex mb-8">
+        <div className="glass-inner rounded-full p-1 flex mb-8 translate-z-20"> {/* Added translate-z-20 */}
           <button
             onClick={() => switchMode("shorten")}
             className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
@@ -169,7 +204,7 @@ export default function Home() {
 
         {/* ══════════════ Shorten Mode ══════════════ */}
         {mode === "shorten" && (
-          <div className="fade-in space-y-6">
+          <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
             {/* Input row with inline button */}
             <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
               <input
@@ -228,7 +263,7 @@ export default function Home() {
 
         {/* ══════════════ Fetch Mode ══════════════ */}
         {mode === "fetch" && (
-          <div className="fade-in space-y-6">
+          <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
             {/* Input row with inline GO button */}
             <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
               <input
@@ -317,7 +352,7 @@ export default function Home() {
             {statsError && <ErrorPanel message={statsError} />}
           </div>
         )}
-      </div>
+      </TiltCard>
 
       {/* ── Footer ── */}
       <p className="text-center text-xs text-white/40 mt-8 tracking-widest font-medium uppercase relative z-10">
