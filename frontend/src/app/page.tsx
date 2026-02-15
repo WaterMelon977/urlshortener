@@ -8,6 +8,7 @@ type Mode = "shorten" | "fetch";
 
 // ── Vanilla Tilt Wrapper ──
 import VanillaTilt from 'vanilla-tilt';
+import BackgroundBubbles from "./components/BackgroundBubbles";
 
 function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -139,8 +140,9 @@ export default function Home() {
         return;
       }
 
-      const data = await res.json(); // Changed from `count` to `data`
-      setClickCount(data.clickCount); // Accessing clickCount from data
+      const data = await res.json();
+      // console.log(data);// Changed from `count` to `data`
+      setClickCount(data); // Accessing clickCount from data
     } catch {
       setStatsError("Network error.");
     } finally {
@@ -169,196 +171,200 @@ export default function Home() {
   const heading = mode === "shorten" ? "Shorten URL" : "Fetch Link";
 
   return (
-    <div className="w-full max-w-md fade-in perspective-1000"> {/* Added perspective-1000 */}
-      {/* ── Glass Card with Tilt ── */}
-      <TiltCard className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg transform-style-3d"> {/* Wrapped with TiltCard and added transform-style-3d */}
-        {/* Heading */}
-        <h1
-          className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display translate-z-10" // Added translate-z-10
-          style={{ fontFamily: "var(--font-outfit)" }}
-        >
-          {heading}
-        </h1>
+    <>
+      <BackgroundBubbles />
+      <div className="w-full max-w-md fade-in perspective-1000"> {/* Added perspective-1000 */}
 
-        {/* ── Pill Toggle ── */}
-        <div className="glass-inner rounded-full p-1 flex mb-8 translate-z-20"> {/* Added translate-z-20 */}
-          <button
-            onClick={() => switchMode("shorten")}
-            className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
-              ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
-              : "text-slate-300 hover:text-white hover:bg-white/10"
-              }`}
+        {/* ── Glass Card with Tilt ── */}
+        <TiltCard className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg transform-style-3d"> {/* Wrapped with TiltCard and added transform-style-3d */}
+          {/* Heading */}
+          <h1
+            className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display translate-z-10" // Added translate-z-10
+            style={{ fontFamily: "var(--font-outfit)" }}
           >
-            Shorten URL
-          </button>
-          <button
-            onClick={() => switchMode("fetch")}
-            className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "fetch"
-              ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
-              : "text-slate-300 hover:text-white hover:bg-white/10"
-              }`}
-          >
-            Fetch Link
-          </button>
-        </div>
+            {heading}
+          </h1>
 
-        {/* ══════════════ Shorten Mode ══════════════ */}
-        {mode === "shorten" && (
-          <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
-            {/* Input row with inline button */}
-            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
-              <input
-                type="url"
-                value={longUrl}
-                onChange={(e) => setLongUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleShorten()}
-                placeholder="https://example.com/very-long-url..."
-                className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
-                style={{ fontFamily: "var(--font-jetbrains)" }}
-              />
-              <button
-                onClick={handleShorten}
-                disabled={shortenLoading || !longUrl.trim()}
-                className="shrink-0 px-6 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
-              >
-                {shortenLoading ? <Spinner /> : "Shorten"}
-              </button>
-            </div>
-
-            {/* Success result */}
-            {shortCode && (
-              <div className="fade-in glass-inner rounded-xl p-6 border border-emerald-500/30" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1 shadow-black/50 drop-shadow-sm">
-                  Short Code
-                </p>
-                <div className="text-2xl font-bold text-white mb-5 drop-shadow-md tracking-tight">{shortCode}</div>
-
-                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 shadow-black/50 drop-shadow-sm">
-                  Full Link
-                </p>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`${API}/url/${shortCode}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-emerald-300 text-sm border border-white/5 truncate transition-colors"
-                  >
-                    {`${API}/url/${shortCode}`}
-                  </a>
-                  <button
-                    onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
-                    className="p-3 bg-white/10 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
-                    title="Copy Link"
-                  >
-                    {copied ? <CheckIcon /> : <CopyIcon />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Error */}
-            {shortenError && <ErrorPanel message={shortenError} />}
-          </div>
-        )}
-
-        {/* ══════════════ Fetch Mode ══════════════ */}
-        {mode === "fetch" && (
-          <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
-            {/* Input row with inline GO button */}
-            <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
-              <input
-                type="text"
-                value={fetchCode}
-                onChange={(e) => setFetchCode(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleGo()}
-                placeholder="Enter short code..."
-                className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
-                style={{ fontFamily: "var(--font-jetbrains)" }}
-              />
-              <button
-                onClick={handleGo}
-                disabled={fetchLoading || !fetchCode.trim()}
-                className="shrink-0 px-8 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
-              >
-                {fetchLoading ? <Spinner /> : "GO"}
-              </button>
-            </div>
-
-            {/* Stats button */}
+          {/* ── Pill Toggle ── */}
+          <div className="glass-inner rounded-full p-1 flex mb-8 translate-z-20"> {/* Added translate-z-20 */}
             <button
-              onClick={handleStats}
-              disabled={statsLoading || !fetchCode.trim()}
-              className="w-full py-3.5 bg-cyan-500/90 hover:bg-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
+              onClick={() => switchMode("shorten")}
+              className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
+                ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
+                : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
             >
-              {statsLoading ? (
-                <span className="inline-flex items-center gap-2 justify-center">
-                  <Spinner /> Loading stats...
-                </span>
-              ) : (
-                "View Stats"
-              )}
+              Shorten URL
             </button>
+            <button
+              onClick={() => switchMode("fetch")}
+              className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "fetch"
+                ? "bg-emerald-500/90 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]"
+                : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
+            >
+              Fetch Link
+            </button>
+          </div>
 
-            {/* Resolved URL */}
-            {resolvedUrl && (
-              <div className="fade-in glass-inner rounded-xl p-6 border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                  Destination URL
-                </p>
-                <div className="flex items-center gap-2 mb-5">
+          {/* ══════════════ Shorten Mode ══════════════ */}
+          {mode === "shorten" && (
+            <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
+              {/* Input row with inline button */}
+              <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
+                <input
+                  type="url"
+                  value={longUrl}
+                  onChange={(e) => setLongUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleShorten()}
+                  placeholder="https://example.com/very-long-url..."
+                  className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
+                  style={{ fontFamily: "var(--font-jetbrains)" }}
+                />
+                <button
+                  onClick={handleShorten}
+                  disabled={shortenLoading || !longUrl.trim()}
+                  className="shrink-0 px-6 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
+                >
+                  {shortenLoading ? <Spinner /> : "Shorten"}
+                </button>
+              </div>
+
+              {/* Success result */}
+              {shortCode && (
+                <div className="fade-in glass-inner rounded-xl p-6 border border-emerald-500/30" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1 shadow-black/50 drop-shadow-sm">
+                    Short Code
+                  </p>
+                  <div className="text-2xl font-bold text-white mb-5 drop-shadow-md tracking-tight">{shortCode}</div>
+
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 shadow-black/50 drop-shadow-sm">
+                    Full Link
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`${API}/url/${shortCode}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-emerald-300 text-sm border border-white/5 truncate transition-colors"
+                    >
+                      {`${API}/url/${shortCode}`}
+                    </a>
+                    <button
+                      onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
+                      className="p-3 bg-white/10 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
+                      title="Copy Link"
+                    >
+                      {copied ? <CheckIcon /> : <CopyIcon />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Error */}
+              {shortenError && <ErrorPanel message={shortenError} />}
+            </div>
+          )}
+
+          {/* ══════════════ Fetch Mode ══════════════ */}
+          {mode === "fetch" && (
+            <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
+              {/* Input row with inline GO button */}
+              <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
+                <input
+                  type="text"
+                  value={fetchCode}
+                  onChange={(e) => setFetchCode(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleGo()}
+                  placeholder="Enter short code..."
+                  className="flex-1 bg-transparent py-4 text-sm text-white placeholder-slate-400 outline-none"
+                  style={{ fontFamily: "var(--font-jetbrains)" }}
+                />
+                <button
+                  onClick={handleGo}
+                  disabled={fetchLoading || !fetchCode.trim()}
+                  className="shrink-0 px-8 py-2.5 bg-emerald-500/90 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
+                >
+                  {fetchLoading ? <Spinner /> : "GO"}
+                </button>
+              </div>
+
+              {/* Stats button */}
+              <button
+                onClick={handleStats}
+                disabled={statsLoading || !fetchCode.trim()}
+                className="w-full py-3.5 bg-cyan-500/90 hover:bg-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed text-slate-900 text-sm font-bold rounded-full shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all duration-200 btn-press cursor-pointer uppercase tracking-wider"
+              >
+                {statsLoading ? (
+                  <span className="inline-flex items-center gap-2 justify-center">
+                    <Spinner /> Loading stats...
+                  </span>
+                ) : (
+                  "View Stats"
+                )}
+              </button>
+
+              {/* Resolved URL */}
+              {resolvedUrl && (
+                <div className="fade-in glass-inner rounded-xl p-6 border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    Destination URL
+                  </p>
+                  <div className="flex items-center gap-2 mb-5">
+                    <a
+                      href={resolvedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-white text-sm border border-white/5 truncate transition-colors drop-shadow-sm"
+                    >
+                      {resolvedUrl}
+                    </a>
+                    <button
+                      onClick={() => copyToClipboard(resolvedUrl)}
+                      className="p-3 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
+                      title="Copy URL"
+                    >
+                      {copied ? <CheckIcon /> : <CopyIcon />}
+                    </button>
+                  </div>
                   <a
                     href={resolvedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-white text-sm border border-white/5 truncate transition-colors drop-shadow-sm"
+                    className="block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-emerald-900/20 transition btn-press cursor-pointer"
                   >
-                    {resolvedUrl}
+                    Visit URL ↗
                   </a>
-                  <button
-                    onClick={() => copyToClipboard(resolvedUrl)}
-                    className="p-3 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
-                    title="Copy URL"
-                  >
-                    {copied ? <CheckIcon /> : <CopyIcon />}
-                  </button>
                 </div>
-                <a
-                  href={resolvedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-emerald-900/20 transition btn-press cursor-pointer"
-                >
-                  Visit URL ↗
-                </a>
-              </div>
-            )}
+              )}
 
-            {/* Stats result */}
-            {clickCount !== null && (
-              <div className="fade-in glass-inner rounded-xl p-6 text-center border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Total Clicks
-                </p>
-                <p
-                  className="text-5xl font-bold text-white drop-shadow-lg"
-                >
-                  {clickCount}
-                </p>
-              </div>
-            )}
+              {/* Stats result */}
+              {clickCount !== null && (
+                <div className="fade-in glass-inner rounded-xl p-6 text-center border border-white/10" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    Total Clicks
+                  </p>
+                  <p
+                    className="text-5xl font-bold text-white drop-shadow-lg"
+                  >
+                    {clickCount}
+                  </p>
+                </div>
+              )}
 
-            {/* Errors */}
-            {fetchError && <ErrorPanel message={fetchError} />}
-            {statsError && <ErrorPanel message={statsError} />}
-          </div>
-        )}
-      </TiltCard>
+              {/* Errors */}
+              {fetchError && <ErrorPanel message={fetchError} />}
+              {statsError && <ErrorPanel message={statsError} />}
+            </div>
+          )}
+        </TiltCard>
 
-      {/* ── Footer ── */}
-      <p className="text-center text-xs text-white/40 mt-8 tracking-widest font-medium uppercase relative z-10">
-        Built by Sumanth
-      </p>
-    </div>
+        {/* ── Footer ── */}
+        <p className="text-center text-xs text-white/40 mt-8 tracking-widest font-medium uppercase relative z-10">
+          Built by Sumanth
+        </p>
+      </div>
+    </>
   );
 }
 

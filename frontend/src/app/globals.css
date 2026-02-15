@@ -141,3 +141,87 @@ body {
   /* Stylistic alternates if available */
   letter-spacing: -0.02em;
 }
+
+/* ── Background Bubbles ── */
+/* ── Background Bubbles ── */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0) 70%);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+  /* Subtle inner glow */
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation-name: float;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.8;
+  /* Increased opacity from 0.5 */
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+/* Realistic Shine/Glimmer */
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 25%;
+  height: 15%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%);
+  /* Increased opacity to 0.95 */
+  transform: rotate(-45deg);
+  filter: blur(0.5px);
+  /* Sharpened the blur from 1px to 0.5px for crisper shine */
+  opacity: 0.9;
+  /* Increased opacity from 0.8 to 0.9 */
+}
+
+/* Second smaller shine for realism */
+.bubble::before {
+  content: "";
+  position: absolute;
+  top: 20%;
+  left: 18%;
+  width: 8%;
+  /* Slightly smaller */
+  height: 4%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  transform: rotate(-45deg);
+  filter: blur(0.2px);
+  /* Very sharp highlight */
+  opacity: 1;
+}
+
+.bubble:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.1);
+  /* cursor: pointer; */
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(100vh) translateX(0);
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 0.8;
+  }
+
+  90% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(-120vh) translateX(20px);
+    /* Move all the way to top and beyond */
+    opacity: 0;
+  }
+}
