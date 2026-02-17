@@ -216,11 +216,11 @@ body {
   }
 
   90% {
-    opacity: 0.8;
+    opacity: 0.3;
   }
 
   100% {
-    transform: translateY(-120vh) translateX(20px);
+    transform: translateY(-100vh) translateX(20px);
     /* Move all the way to top and beyond */
     opacity: 0;
   }

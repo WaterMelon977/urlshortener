@@ -1,74 +1,73 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react"; // Added useRef, useEffect
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import BackgroundBubbles from "./components/BackgroundBubbles";
+import TiltCard from "./components/TiltCard";
+import { Spinner, CopyIcon, CheckIcon, ErrorPanel } from "./components/UIComponents";
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 type Mode = "shorten" | "fetch";
 
-// ── Vanilla Tilt Wrapper ──
-import VanillaTilt from 'vanilla-tilt';
-import BackgroundBubbles from "./components/BackgroundBubbles";
-
-function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  const tiltRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const tiltNode = tiltRef.current;
-    if (tiltNode) {
-      VanillaTilt.init(tiltNode, {
-        max: 8, // subtle tilt
-        speed: 400,
-        glare: true,
-        "max-glare": 0.3,
-        scale: 1.02,
-        gyroscope: true, // for mobile if supported
-        // @ts-expect-error vanilla-tilt supports element but types might be outdated
-        "mouse-event-element": document.body, // Tilt based on mouse position anywhere on the body
-      });
-    }
-    return () => {
-      // @ts-expect-error VanillaTilt adds destroy method
-      tiltNode?.vanillaTilt?.destroy();
-    };
-  }, []);
-
-  return (
-    <div ref={tiltRef} className={className}>
-      {children}
-    </div>
-  );
+interface UserInfo {
+  username: string;
+  avatar: string;
+  provider: string;
 }
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("shorten");
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
 
   // ── Shorten state ──
   const [longUrl, setLongUrl] = useState("");
-  const [shortCode, setShortCode] = useState<string>(""); // Changed from string | null
+  const [shortCode, setShortCode] = useState<string>("");
   const [shortenLoading, setShortenLoading] = useState(false);
-  const [shortenError, setShortenError] = useState<string>(""); // Changed from string | null
+  const [shortenError, setShortenError] = useState<string>("");
 
   // ── Fetch state ──
   const [fetchCode, setFetchCode] = useState("");
-  const [resolvedUrl, setResolvedUrl] = useState<string>(""); // Changed from string | null
+  const [resolvedUrl, setResolvedUrl] = useState<string>("");
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string>(""); // Changed from string | null
+  const [fetchError, setFetchError] = useState<string>("");
 
   // ── Stats state ──
   const [clickCount, setClickCount] = useState<number | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [statsError, setStatsError] = useState<string>(""); // Changed from string | null
+  const [statsError, setStatsError] = useState<string>("");
 
   const [copied, setCopied] = useState(false);
+
+  // ─── User Fetch ─────────────────────────────────────────
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch(`${API}/api/me`, {
+          credentials: "include", // Essential for sending cookies
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      } finally {
+        setUserLoading(false);
+      }
+    }
+    fetchUser();
+  }, []);
 
   // ─── Handlers ──────────────────────────────────────────
 
   async function handleShorten() {
     if (!longUrl.trim()) return;
     setShortenLoading(true);
-    setShortenError(""); // Changed from null
-    setShortCode(""); // Changed from null
+    setShortenError("");
+    setShortCode("");
 
     try {
       const res = await fetch(`${API}/shorten`, {
@@ -95,19 +94,19 @@ export default function Home() {
   async function handleGo() {
     if (!fetchCode.trim()) return;
     setFetchLoading(true);
-    setFetchError(""); // Changed from null
-    setResolvedUrl(""); // Changed from null
+    setFetchError("");
+    setResolvedUrl("");
     setClickCount(null);
-    setStatsError(""); // Changed from null
+    setStatsError("");
 
     try {
-      const res = await fetch(`${API}/url/${fetchCode}`, {
+      const res = await fetch(`${API}/${fetchCode}`, {
         headers: { "Accept": "application/json" }
       });
 
       if (!res.ok) {
-        if (res.status === 404) setFetchError("Short code not found"); // Updated error message
-        else setFetchError("Error fetching URL"); // Updated error message
+        if (res.status === 404) setFetchError("Short code not found");
+        else setFetchError("Error fetching URL");
         return;
       }
 
@@ -116,10 +115,10 @@ export default function Home() {
       if (data && data.longUrl) {
         setResolvedUrl(data.longUrl);
       } else {
-        setFetchError("Invalid response from server."); // Updated error message
+        setFetchError("Invalid response from server.");
       }
     } catch {
-      setFetchError("Network error."); // Updated error message
+      setFetchError("Network error.");
     } finally {
       setFetchLoading(false);
     }
@@ -128,21 +127,20 @@ export default function Home() {
   async function handleStats() {
     if (!fetchCode.trim()) return;
     setStatsLoading(true);
-    setStatsError(""); // Changed from null
+    setStatsError("");
     setClickCount(null);
 
     try {
-      const res = await fetch(`${API}/url/${fetchCode}/stats`);
+      const res = await fetch(`${API}/${fetchCode}/stats`);
 
       if (!res.ok) {
-        if (res.status === 404) setStatsError("Short code not found"); // Updated error message
-        else setStatsError("Error fetching stats"); // Updated error message
+        if (res.status === 404) setStatsError("Short code not found");
+        else setStatsError("Error fetching stats");
         return;
       }
 
       const data = await res.json();
-      // console.log(data);// Changed from `count` to `data`
-      setClickCount(data); // Accessing clickCount from data
+      setClickCount(data);
     } catch {
       setStatsError("Network error.");
     } finally {
@@ -158,12 +156,12 @@ export default function Home() {
 
   function switchMode(newMode: Mode) {
     setMode(newMode);
-    setShortenError(""); // Changed from null
-    setShortCode(""); // Changed from null
-    setFetchError(""); // Changed from null
-    setResolvedUrl(""); // Changed from null
+    setShortenError("");
+    setShortCode("");
+    setFetchError("");
+    setResolvedUrl("");
     setClickCount(null);
-    setStatsError(""); // Changed from null
+    setStatsError("");
   }
 
   // ─── Render ────────────────────────────────────────────
@@ -173,20 +171,57 @@ export default function Home() {
   return (
     <>
       <BackgroundBubbles />
-      <div className="w-full max-w-md fade-in perspective-1000"> {/* Added perspective-1000 */}
+
+      {/* ── User Session Info (Floating top-right) ── */}
+      <div className="fixed top-6 right-6 z-50 fade-in">
+        {userLoading ? (
+          <div className="glass px-4 py-2 border border-white/10 bg-black/20 text-white/40 text-xs">
+            <Spinner />
+          </div>
+        ) : user ? (
+          <div className="glass px-4 py-2.5 flex items-center gap-3 border border-white/20 bg-black/30 backdrop-blur-xl">
+            {user.avatar && (
+              <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
+            )}
+            <div className="text-left hidden sm:block">
+              <p className="text-xs font-bold text-white tracking-tight">{user.username}</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest">{user.provider}</p>
+            </div>
+            <button
+              onClick={() => {
+                // Logout is usually done by clearing the cookie, which backend can do on a /logout endpoint
+                // For now, redirect or just clear state if it's purely client-side logout
+                window.location.href = `${API}/logout`; // Assuming standard Spring Security logout
+              }}
+              className="ml-2 text-xs text-white/40 hover:text-rose-400 transition-colors cursor-pointer"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/login"
+            className="glass px-6 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30 transition-all btn-press"
+          >
+            Sign In
+          </Link>
+        )}
+      </div>
+
+      <div className="w-full max-w-md fade-in perspective-1000">
 
         {/* ── Glass Card with Tilt ── */}
-        <TiltCard className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg transform-style-3d"> {/* Wrapped with TiltCard and added transform-style-3d */}
+        <TiltCard className="glass rounded-3xl px-8 pt-10 pb-8 relative z-10 w-full max-w-lg transform-style-3d">
           {/* Heading */}
           <h1
-            className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display translate-z-10" // Added translate-z-10
+            className="text-center text-3xl font-bold text-white mb-8 tracking-tight drop-shadow-md font-display translate-z-10"
             style={{ fontFamily: "var(--font-outfit)" }}
           >
             {heading}
           </h1>
 
           {/* ── Pill Toggle ── */}
-          <div className="glass-inner rounded-full p-1 flex mb-8 translate-z-20"> {/* Added translate-z-20 */}
+          <div className="glass-inner rounded-full p-1 flex mb-8 translate-z-20">
             <button
               onClick={() => switchMode("shorten")}
               className={`flex-1 py-3 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${mode === "shorten"
@@ -209,7 +244,7 @@ export default function Home() {
 
           {/* ══════════════ Shorten Mode ══════════════ */}
           {mode === "shorten" && (
-            <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
+            <div className="fade-in space-y-6 translate-z-30">
               {/* Input row with inline button */}
               <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
                 <input
@@ -243,15 +278,15 @@ export default function Home() {
                   </p>
                   <div className="flex items-center gap-2">
                     <a
-                      href={`${API}/url/${shortCode}`}
+                      href={`${API}/${shortCode}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 px-4 py-3 bg-black/20 hover:bg-black/30 rounded-lg text-emerald-300 text-sm border border-white/5 truncate transition-colors"
                     >
-                      {`${API}/url/${shortCode}`}
+                      {`${API}/${shortCode}`}
                     </a>
                     <button
-                      onClick={() => copyToClipboard(`${API}/url/${shortCode}`)}
+                      onClick={() => copyToClipboard(`${API}/${shortCode}`)}
                       className="p-3 bg-white/10 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 rounded-lg border border-white/10 transition-all duration-200 btn-press cursor-pointer shrink-0"
                       title="Copy Link"
                     >
@@ -268,7 +303,7 @@ export default function Home() {
 
           {/* ══════════════ Fetch Mode ══════════════ */}
           {mode === "fetch" && (
-            <div className="fade-in space-y-6 translate-z-30"> {/* Added translate-z-30 */}
+            <div className="fade-in space-y-6 translate-z-30">
               {/* Input row with inline GO button */}
               <div className="glass-inner rounded-full flex items-center pr-1.5 pl-5 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all duration-300">
                 <input
@@ -368,38 +403,3 @@ export default function Home() {
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────
-
-function Spinner() {
-  return (
-    <svg className="animate-spin h-4 w-4 inline-block" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z" />
-    </svg>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function ErrorPanel({ message }: { message: string }) {
-  return (
-    <div className="fade-in bg-rose-100/40 border border-rose-200/50 rounded-2xl px-4 py-3" style={{ fontFamily: "var(--font-jetbrains)" }}>
-      <p className="text-sm text-rose-600 font-medium">{message}</p>
-    </div>
-  );
-}

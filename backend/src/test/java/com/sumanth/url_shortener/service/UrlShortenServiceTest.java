@@ -20,6 +20,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import com.sumanth.url_shortener.exception.InvalidUrlException;
 import com.sumanth.url_shortener.model.UrlMapping;
 import com.sumanth.url_shortener.repository.UrlMappingRepository;
+import com.sumanth.url_shortener.util.SecureCodeGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class UrlShortenServiceTest {
@@ -39,11 +40,14 @@ public class UrlShortenServiceTest {
     @Mock
     private RedisStreamPublisher publisher;
 
+    @Mock
+    private SecureCodeGenerator secureCodeGenerator;
+
     private UrlShortenService urlShortenService;
 
     @BeforeEach
     void setUp() {
-        urlShortenService = new UrlShortenService(repo, counterService, redisTemplate, publisher);
+        urlShortenService = new UrlShortenService(repo, counterService, redisTemplate, publisher, secureCodeGenerator);
     }
 
     @Test
@@ -51,6 +55,7 @@ public class UrlShortenServiceTest {
         String longUrl = "https://www.google.com";
         when(repo.findByUrlHash(any())).thenReturn(Optional.empty());
         when(counterService.getNextSequence()).thenReturn(1L);
+        when(secureCodeGenerator.generate(1L)).thenReturn("shortCode");
         when(repo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         UrlMapping result = urlShortenService.shortenUrl(longUrl);
@@ -65,6 +70,7 @@ public class UrlShortenServiceTest {
         String longUrl = "HTTPS://WWW.GOOGLE.COM/Path";
         when(repo.findByUrlHash(any())).thenReturn(Optional.empty());
         when(counterService.getNextSequence()).thenReturn(1L);
+        when(secureCodeGenerator.generate(1L)).thenReturn("shortCode");
         when(repo.save(any())).thenAnswer(invocation -> {
             UrlMapping mapping = invocation.getArgument(0);
             // Verify normalization happen inside the service before saving
@@ -103,6 +109,7 @@ public class UrlShortenServiceTest {
         String urlWithDefaultPort = "http://google.com:80";
         when(repo.findByUrlHash(any())).thenReturn(Optional.empty());
         when(counterService.getNextSequence()).thenReturn(1L);
+        when(secureCodeGenerator.generate(1L)).thenReturn("shortCode");
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
 
         UrlMapping result = urlShortenService.shortenUrl(urlWithDefaultPort);

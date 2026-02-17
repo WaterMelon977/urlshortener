@@ -25,13 +25,16 @@ public class UrlShortenService {
     private final CounterService counterService;
     private final StringRedisTemplate redisTemplate;
     private final RedisStreamPublisher publisher;
+    private final com.sumanth.url_shortener.util.SecureCodeGenerator secureCodeGenerator;
 
     public UrlShortenService(UrlMappingRepository repo, CounterService counterService,
-            StringRedisTemplate redisTemplate, RedisStreamPublisher publisher) {
+            StringRedisTemplate redisTemplate, RedisStreamPublisher publisher,
+            com.sumanth.url_shortener.util.SecureCodeGenerator secureCodeGenerator) {
         this.repo = repo;
         this.counterService = counterService;
         this.redisTemplate = redisTemplate;
         this.publisher = publisher;
+        this.secureCodeGenerator = secureCodeGenerator;
     }
 
     public UrlMapping shortenUrl(String longUrl) {
@@ -47,7 +50,8 @@ public class UrlShortenService {
             return existing.get();
         } else {
             long seq = counterService.getNextSequence();
-            String shortCode = Base62Encoder.encode(seq);
+            // String shortCode = Base62Encoder.encode(seq);
+            String shortCode = secureCodeGenerator.generate(seq);
             UrlMapping mapping = new UrlMapping(null, longUrl, hash, shortCode, Instant.now(), Instant.now(), 0);
 
             return repo.save(mapping);

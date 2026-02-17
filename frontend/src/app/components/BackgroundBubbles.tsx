@@ -22,7 +22,7 @@ export default function BackgroundBubbles() {
             ? Math.random() * 35 // 0% to 35%
             : Math.random() * 35 + 65; // 65% to 100%
 
-        const animationDuration = Math.random() * 10 + 10; // 10s to 20s
+        const animationDuration = Math.random() * 10 + 40; // 10s to 20s
         const animationDelay = Math.random() * 10; // 0s to 10s
 
         return {
