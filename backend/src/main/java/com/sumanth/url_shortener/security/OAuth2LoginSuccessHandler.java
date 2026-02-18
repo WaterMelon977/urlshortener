@@ -2,7 +2,7 @@ package com.sumanth.url_shortener.security;
 
 import com.sumanth.url_shortener.model.OAuthUser;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,12 +48,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 oAuthUser.getAvatar(),
                 oAuthUser.getEmail());
 
-        Cookie cookie = new Cookie("jwt", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(24 * 60 * 60); // 1 day
-        // SameSite=None must be set via header since Cookie API doesn't support it
+        // SameSite=None is required for cross-site cookie sending (Vercel → Render).
+        // The Cookie API doesn't support SameSite, so we set it via raw header only.
         response.addHeader("Set-Cookie",
                 String.format("jwt=%s; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
                         token, 24 * 60 * 60));
