@@ -15,8 +15,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SnipLink — URL Shortener",
-  description: "Shorten, share, and track your URLs.",
+  title: "UltraShort — URL Shortener",
+  description: "Shorten, share, and track your URLs.By Sumanth_R",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
