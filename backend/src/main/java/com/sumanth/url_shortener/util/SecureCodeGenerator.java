@@ -7,22 +7,29 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SecureCodeGenerator {
 
-    // Ideally, this should be loaded from application properties/environment
-    // variables
-    private static final String SECRET_KEY = "my_super_secret_key_change_this";
-    private static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final BigInteger BASE = BigInteger.valueOf(ALPHABET.length());
+    private final String secretKey;
+    private final String alphabet;
+    private final BigInteger base;
+
+    public SecureCodeGenerator(
+            @Value("${app.secure-code.secret-key}") String secretKey,
+            @Value("${app.secure-code.alphabet}") String alphabet) {
+        this.secretKey = secretKey;
+        this.alphabet = alphabet;
+        this.base = BigInteger.valueOf(alphabet.length());
+    }
 
     public String generate(long seq) {
         try {
             // 1. Get HMAC-SHA256 of the sequence
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret_key = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             sha256_HMAC.init(secret_key);
 
             byte[] hashBytes = sha256_HMAC.doFinal(String.valueOf(seq).getBytes(StandardCharsets.UTF_8));
@@ -33,15 +40,15 @@ public class SecureCodeGenerator {
             // 3. Base62 Encode
             StringBuilder sb = new StringBuilder();
             while (bigInt.compareTo(BigInteger.ZERO) > 0) {
-                BigInteger[] divRem = bigInt.divideAndRemainder(BASE);
-                sb.append(ALPHABET.charAt(divRem[1].intValue()));
+                BigInteger[] divRem = bigInt.divideAndRemainder(base);
+                sb.append(alphabet.charAt(divRem[1].intValue()));
                 bigInt = divRem[0];
             }
 
             // If the hash results in 0 (extremely unlikely), handle it
             // However, loop condition (bigInt > 0) handles initialization
             if (sb.length() == 0) {
-                return String.valueOf(ALPHABET.charAt(0));
+                return String.valueOf(alphabet.charAt(0));
             }
 
             // Reverse to get correct Base62 representation (standard practice, though for

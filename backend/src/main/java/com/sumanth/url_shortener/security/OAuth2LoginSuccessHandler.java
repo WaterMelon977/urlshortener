@@ -23,7 +23,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     public OAuth2LoginSuccessHandler(
             JwtService jwtService,
-            @Value("${FRONTEND_URL}") String frontendUrl) {
+            @Value("${FRONTEND_URL:http://localhost:3000}") String frontendUrl) {
         this.jwtService = jwtService;
         this.frontendUrl = frontendUrl;
     }

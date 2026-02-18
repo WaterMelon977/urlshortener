@@ -1,6 +1,7 @@
 package com.sumanth.url_shortener.config;
 
 import com.sumanth.url_shortener.security.CustomOAuth2UserService;
+import com.sumanth.url_shortener.security.CustomOidcUserService;
 import com.sumanth.url_shortener.security.JwtAuthenticationFilter;
 import com.sumanth.url_shortener.security.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,16 +25,19 @@ import java.util.List;
 public class SecurityConfig {
 
         private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomOidcUserService customOidcUserService;
         private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
         private final String frontendUrl;
 
         public SecurityConfig(
                         CustomOAuth2UserService customOAuth2UserService,
+                        CustomOidcUserService customOidcUserService,
                         OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
                         JwtAuthenticationFilter jwtAuthenticationFilter,
-                        @Value("${FRONTEND_URL}") String frontendUrl) {
+                        @Value("${FRONTEND_URL:http://localhost:3000}") String frontendUrl) {
                 this.customOAuth2UserService = customOAuth2UserService;
+                this.customOidcUserService = customOidcUserService;
                 this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
                 this.frontendUrl = frontendUrl;
@@ -74,7 +78,8 @@ public class SecurityConfig {
                                                 }))
                                 .oauth2Login(oauth2 -> oauth2
                                                 .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOAuth2UserService))
+                                                                .userService(customOAuth2UserService)
+                                                                .oidcUserService(customOidcUserService))
                                                 .successHandler(oAuth2LoginSuccessHandler))
                                 .logout(logout -> logout
                                                 .logoutUrl("/logout")

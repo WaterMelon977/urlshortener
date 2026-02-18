@@ -1,6 +1,5 @@
 package com.sumanth.url_shortener.util;
 
-import com.sumanth.url_shortener.util.SecureCodeGenerator;
 import org.junit.jupiter.api.Test;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class SecureCodeGeneratorTest {
 
-    private final SecureCodeGenerator generator = new SecureCodeGenerator();
+    private final SecureCodeGenerator generator = new SecureCodeGenerator(
+            "test_secret",
+            "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
     @Test
     public void generate_shouldReturnNonEmptyString() {
