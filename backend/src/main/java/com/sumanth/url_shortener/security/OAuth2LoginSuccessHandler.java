@@ -2,7 +2,6 @@ package com.sumanth.url_shortener.security;
 
 import com.sumanth.url_shortener.model.OAuthUser;
 import jakarta.servlet.ServletException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +11,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
@@ -37,8 +38,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         OAuthUser oAuthUser = (OAuthUser) oAuth2User.getAttributes().get("oAuthUser");
 
         if (oAuthUser == null) {
-            // Fallback for OIDC providers (like Google) or standard OAuth providers
-            // where CustomOAuth2UserService was not engaged.
             oAuthUser = extractUserFromPrincipal(authentication);
         }
 
@@ -48,13 +47,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 oAuthUser.getAvatar(),
                 oAuthUser.getEmail());
 
-        // SameSite=None is required for cross-site cookie sending (Vercel → Render).
-        // The Cookie API doesn't support SameSite, so we set it via raw header only.
-        response.addHeader("Set-Cookie",
-                String.format("jwt=%s; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
-                        token, 24 * 60 * 60));
+        // Redirect to frontend with token as a query parameter.
+        // The frontend will extract it, store in localStorage, and clear the URL.
+        String redirectUrl = frontendUrl + "/auth/callback?token="
+                + URLEncoder.encode(token, StandardCharsets.UTF_8);
 
-        response.sendRedirect(frontendUrl);
+        response.sendRedirect(redirectUrl);
     }
 
     private OAuthUser extractUserFromPrincipal(Authentication authentication) {
@@ -75,7 +73,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 extracted.setEmail((String) attributes.getOrDefault("email", ""));
                 extracted.setAvatar((String) attributes.getOrDefault("avatar_url", ""));
             } else {
-                // Generic fallback
                 extracted.setUsername(user.getName());
                 extracted.setEmail("");
                 extracted.setAvatar("");

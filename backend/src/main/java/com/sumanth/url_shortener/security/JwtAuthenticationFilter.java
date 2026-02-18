@@ -29,7 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String token = extractTokenFromCookie(request);
+        String token = extractTokenFromHeader(request);
+
+        // Fallback to cookie for backwards compatibility / direct browser access
+        if (token == null) {
+            token = extractTokenFromCookie(request);
+        }
 
         if (token != null && jwtService.isTokenValid(token)) {
             Claims claims = jwtService.parseToken(token);
@@ -51,6 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractTokenFromHeader(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     private String extractTokenFromCookie(HttpServletRequest request) {
