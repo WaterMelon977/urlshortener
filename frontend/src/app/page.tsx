@@ -6,7 +6,7 @@ import BackgroundBubbles from "./components/BackgroundBubbles";
 import TiltCard from "./components/TiltCard";
 import { Spinner, CopyIcon, CheckIcon, ErrorPanel } from "./components/UIComponents";
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? "";
+const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 
 type Mode = "shorten" | "fetch";
 
@@ -44,13 +44,21 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchUser() {
+      const token = localStorage.getItem("jwt");
+      if (!token) {
+        setUserLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`${API}/api/me`, {
-          credentials: "include", // Essential for sending cookies
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
           setUser(data);
+        } else {
+          // Token expired or invalid
+          localStorage.removeItem("jwt");
         }
       } catch (err) {
         console.error("Failed to fetch user:", err);
@@ -189,9 +197,8 @@ export default function Home() {
             </div>
             <button
               onClick={() => {
-                // Logout is usually done by clearing the cookie, which backend can do on a /logout endpoint
-                // For now, redirect or just clear state if it's purely client-side logout
-                window.location.href = `${API}/logout`; // Assuming standard Spring Security logout
+                localStorage.removeItem("jwt");
+                setUser(null);
               }}
               className="ml-2 text-xs text-white/40 hover:text-rose-400 transition-colors cursor-pointer"
             >

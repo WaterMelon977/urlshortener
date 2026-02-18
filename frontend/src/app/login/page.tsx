@@ -3,7 +3,7 @@
 import TiltCard from "../components/TiltCard";
 import BackgroundBubbles from "../components/BackgroundBubbles";
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? "";
+const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 
 export default function LoginPage() {
     return (
